@@ -64,10 +64,10 @@ const app = {
 
   setupHeader() {
     const title = document.createElement("h1");
-    title.textContent = "ftodo Starter";
+    title.textContent = "";
 
     const description = document.createElement("p");
-    description.textContent = "Use the menu below to add todos and categories.";
+    description.textContent = "";
 
     this.elements.header.append(title, description);
   },
@@ -228,11 +228,24 @@ const app = {
       this.renderTodos();
     });
 
+    // toggle for the menu (create todo/category) visibility
+    this.elements.menuToggleButton = document.createElement("button");
+    this.elements.menuToggleButton.type = "button";
+    this.elements.menuToggleButton.className = "collapse-button";
+    this.elements.menuToggleButton.textContent = "Hide menu";
+    this.elements.menuToggleButton.addEventListener("click", () => {
+      const menu = this.elements.menuBlock;
+      if (!menu) return;
+      const isHidden = menu.style.display === "none";
+      menu.style.display = isHidden ? "block" : "none";
+      this.elements.menuToggleButton.textContent = isHidden ? "Hide menu" : "Show menu";
+    });
+
     const headerWrap = document.createElement("div");
     headerWrap.style.display = "flex";
     headerWrap.style.justifyContent = "space-between";
     headerWrap.style.alignItems = "center";
-    headerWrap.append(listTitle, this.elements.collapseButton);
+    headerWrap.append(listTitle, this.elements.menuToggleButton, this.elements.collapseButton);
 
     this.elements.todoBlock.append(headerWrap, this.elements.todoList);
 
@@ -291,7 +304,17 @@ const app = {
   renderTodos() {
     this.elements.todoList.innerHTML = "";
 
-    const visibleTodos = todos.filter((todo) => this.shouldDisplayTodo(todo));
+    let visibleTodos = todos.filter((todo) => this.shouldDisplayTodo(todo));
+
+    // sort by category importance (descending). Higher importanceIndex -> earlier in list
+    visibleTodos.sort((a, b) => {
+      const ca = categories.find((c) => c.name === a.category);
+      const cb = categories.find((c) => c.name === b.category);
+      const ia = ca && typeof ca.importanceIndex === 'number' ? ca.importanceIndex : 0;
+      const ib = cb && typeof cb.importanceIndex === 'number' ? cb.importanceIndex : 0;
+      if (ib !== ia) return ib - ia;
+      return 0;
+    });
 
     if (visibleTodos.length === 0) {
       const emptyMessage = document.createElement("p");
@@ -315,9 +338,9 @@ const app = {
         this.renderTodos();
       });
 
-      const label = document.createElement("label");
-      label.textContent = `${todo.text} — ${todo.category}`;
-      label.className = "todo-label";
+        const label = document.createElement("label");
+        label.textContent = todo.text;
+        label.className = "todo-label";
 
       // apply category background color if available
       const cat = categories.find((c) => c.name === todo.category);
@@ -329,30 +352,9 @@ const app = {
         todoItem.style.borderRadius = "4px";
       }
 
-      const notes = [];
-      if (todo.previousTodoId) {
-        const prev = todos.find((item) => String(item.id) === String(todo.previousTodoId));
-        if (prev) {
-          notes.push(`Previous todo: ${prev.text}`);
-        }
-      }
-      if (todo.dueDate) {
-        notes.push(`Date: ${todo.dueDate}`);
-      }
-      if (todo.dueTime) {
-        notes.push(`Time: ${todo.dueTime}`);
-      }
-
-      const meta = document.createElement("small");
-      meta.textContent = `${todo.dateDisplay} ${todo.timeDisplay}` + (notes.length ? ` · ${notes.join(" · ")}` : "");
-      meta.className = "todo-meta";
-      if (cat && cat.color) {
-        meta.style.color = this.getContrastColor(cat.color);
-      }
-
       const info = document.createElement("div");
       info.className = "todo-info";
-      info.append(label, meta);
+      info.append(label);
 
       todoItem.append(checkbox, info);
       this.elements.todoList.append(todoItem);
