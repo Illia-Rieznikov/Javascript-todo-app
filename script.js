@@ -10,6 +10,7 @@ class Todo {
     this.previousTodoId = previousTodoId;
     this.dueDate = dueDate;
     this.dueTime = dueTime;
+    this.color;
   }
 }
 
