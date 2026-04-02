@@ -21,9 +21,7 @@ class Category {
 }
 
 const categories = [
-  new Category("General", 1),
-  new Category("Work", 2),
-  new Category("Personal", 1),
+  new Category("General", 1)
 ];
 const todos = [];
 
