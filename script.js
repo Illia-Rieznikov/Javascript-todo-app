@@ -55,6 +55,7 @@ const app = {
     this.elements.header = document.querySelector(".app-header");
     this.elements.card = document.querySelector(".card");
 
+    this.loadFromLocalStorage();
     this.setupHeader();
     this.buildBlocks();
     this.renderCategories();
@@ -70,6 +71,67 @@ const app = {
     description.textContent = "";
 
     this.elements.header.append(title, description);
+  },
+
+  loadFromLocalStorage() {
+    try {
+      const savedData = localStorage.getItem('todoAppData');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        
+        // load categories
+        if (Array.isArray(data.categories) && data.categories.length > 0) {
+          categories.length = 0;
+          data.categories.forEach((c) => {
+            categories.push(new Category(c.name, c.importanceIndex, c.color));
+          });
+        }
+        
+        // load todos
+        if (Array.isArray(data.todos)) {
+          todos.length = 0;
+          data.todos.forEach((t) => {
+            todos.push({
+              id: t.id,
+              text: t.text,
+              category: t.category,
+              completed: t.completed,
+              hidden: t.hidden,
+              dateDisplay: t.dateDisplay,
+              timeDisplay: t.timeDisplay,
+              previousTodoId: t.previousTodoId,
+              dueDate: t.dueDate,
+              dueTime: t.dueTime,
+            });
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load from localStorage:', err);
+    }
+  },
+
+  saveToLocalStorage() {
+    try {
+      const data = {
+        categories: categories.map((c) => ({ name: c.name, importanceIndex: c.importanceIndex, color: c.color })),
+        todos: todos.map((t) => ({
+          id: t.id,
+          text: t.text,
+          category: t.category,
+          completed: t.completed,
+          hidden: t.hidden,
+          dateDisplay: t.dateDisplay,
+          timeDisplay: t.timeDisplay,
+          previousTodoId: t.previousTodoId,
+          dueDate: t.dueDate,
+          dueTime: t.dueTime,
+        })),
+      };
+      localStorage.setItem('todoAppData', JSON.stringify(data));
+    } catch (err) {
+      console.error('Failed to save to localStorage:', err);
+    }
   },
 
   buildBlocks() {
@@ -195,6 +257,12 @@ const app = {
 
     importButton.addEventListener("click", () => importFileInput.click());
 
+    const clearButton = document.createElement("button");
+    clearButton.type = "button";
+    clearButton.textContent = "Clear all";
+    clearButton.className = "secondary-button";
+    clearButton.addEventListener("click", () => this.clearAll());
+
     const addCategoryButton = document.createElement("button");
     addCategoryButton.type = "submit";
     addCategoryButton.textContent = "Add category";
@@ -203,7 +271,7 @@ const app = {
     this.elements.categoryList = document.createElement("div");
     this.elements.categoryList.className = "category-list";
 
-    categoryForm.append(this.elements.categoryInput, this.elements.importanceInput, this.elements.colorInput, addCategoryButton, exportButton, importButton, importFileInput);
+    categoryForm.append(this.elements.categoryInput, this.elements.importanceInput, this.elements.colorInput, addCategoryButton, exportButton, importButton, clearButton, importFileInput);
     this.elements.categorySection.append(categoryTitle, categoryForm, this.elements.categoryList);
 
     this.elements.menuBlock.append(tabBar, this.elements.todoSection, this.elements.categorySection);
@@ -335,6 +403,7 @@ const app = {
       checkbox.checked = todo.completed;
       checkbox.addEventListener("change", () => {
         todo.completed = checkbox.checked;
+        this.saveToLocalStorage();
         this.renderTodos();
       });
 
@@ -470,6 +539,7 @@ const app = {
     this.elements.dueDateInput.value = "";
     this.elements.dueTimeInput.value = "";
     this.renderPreviousTodoOptions();
+    this.saveToLocalStorage();
     this.renderTodos();
   },
 
@@ -486,6 +556,7 @@ const app = {
     this.elements.categoryInput.value = "";
     this.elements.importanceInput.value = "1";
     if (this.elements.colorInput) this.elements.colorInput.value = "#4CAF50";
+    this.saveToLocalStorage();
     this.renderCategories();
   },
 
@@ -564,6 +635,7 @@ const app = {
 
         this.renderCategories();
         this.renderPreviousTodoOptions();
+        this.saveToLocalStorage();
         this.renderTodos();
       } catch (err) {
         alert('Failed to import file: ' + err.message);
@@ -571,6 +643,28 @@ const app = {
     };
     reader.onerror = () => alert('Failed to read file');
     reader.readAsText(file);
+  },
+
+  clearAll() {
+    const ok = confirm('Clear all categories and todos? This cannot be undone.');
+    if (!ok) return;
+
+    // reset categories to default
+    categories.length = 0;
+    categories.push(new Category('General', 1, '#4CAF50'));
+
+    // clear todos
+    todos.length = 0;
+
+    // reset inputs
+    if (this.elements.categoryInput) this.elements.categoryInput.value = '';
+    if (this.elements.importanceInput) this.elements.importanceInput.value = '1';
+    if (this.elements.colorInput) this.elements.colorInput.value = '#4CAF50';
+
+    this.saveToLocalStorage();
+    this.renderCategories();
+    this.renderPreviousTodoOptions();
+    this.renderTodos();
   },
 };
 
