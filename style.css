@@ -68,7 +68,7 @@ button, input, textarea {
 
 .primary-button {
   border: none;
-  padding: 0.9rem 1.4rem;
+  padding: 0.8rem 1.4rem;
   border-radius: 0.75rem;
   background: var(--primary);
   color: var(--primary-contrast);
@@ -114,3 +114,33 @@ button, input, textarea {
 .todo-label {
   margin: 0;
 }
+
+.todo-details {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: #111827;
+  line-height: 1.35;
+  border-left: 2px solid #d1d5db;
+  padding-left: 0.55rem;
+  margin-left: 0.25rem;
+}
+
+.todo-details div {
+  margin-top: 0.15rem;
+}
+
+.secondary-button {
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  padding: 0.7rem 0.95rem;
+  border-radius: 0.70rem;
+  cursor: pointer;
+  margin-right: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.secondary-button:hover {
+  background: #f3f4f6;
+}
+

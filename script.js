@@ -48,8 +48,10 @@ const app = {
       todoList: null,
       categoryList: null,
       collapseButton: null,
+      detailsToggleButton: null,
   },
     collapsed: false,
+    showDetails: false,
 
   init() {
     this.elements.header = document.querySelector(".app-header");
@@ -237,13 +239,13 @@ const app = {
     const exportButton = document.createElement("button");
     exportButton.type = "button";
     exportButton.textContent = "Export";
-    exportButton.className = "secondary-button";
+    exportButton.className = "collapse-button";
     exportButton.addEventListener("click", () => this.exportAll());
 
     const importButton = document.createElement("button");
     importButton.type = "button";
     importButton.textContent = "Import";
-    importButton.className = "secondary-button";
+    importButton.className = "collapse-button";
 
     const importFileInput = document.createElement("input");
     importFileInput.type = "file";
@@ -260,7 +262,7 @@ const app = {
     const clearButton = document.createElement("button");
     clearButton.type = "button";
     clearButton.textContent = "Clear all";
-    clearButton.className = "secondary-button";
+    clearButton.className = "collapse-button";
     clearButton.addEventListener("click", () => this.clearAll());
 
     const addCategoryButton = document.createElement("button");
@@ -272,7 +274,19 @@ const app = {
     this.elements.categoryList.className = "category-list";
 
     categoryForm.append(this.elements.categoryInput, this.elements.importanceInput, this.elements.colorInput, addCategoryButton, exportButton, importButton, clearButton, importFileInput);
-    this.elements.categorySection.append(categoryTitle, categoryForm, this.elements.categoryList);
+
+    this.elements.detailsToggleButton = document.createElement("button");
+    this.elements.detailsToggleButton.type = "button";
+    this.elements.detailsToggleButton.className = "collapse-button";
+    this.elements.detailsToggleButton.textContent = "Show details";
+    this.elements.detailsToggleButton.addEventListener("click", () => {
+      this.showDetails = !this.showDetails;
+      this.elements.detailsToggleButton.textContent = this.showDetails ? "Hide details" : "Show details";
+      this.collapsed = false; // detail mode should override collapsed list
+      this.renderTodos();
+    });
+
+    this.elements.categorySection.append(categoryTitle, categoryForm, this.elements.detailsToggleButton, this.elements.categoryList);
 
     this.elements.menuBlock.append(tabBar, this.elements.todoSection, this.elements.categorySection);
 
@@ -372,7 +386,12 @@ const app = {
   renderTodos() {
     this.elements.todoList.innerHTML = "";
 
-    let visibleTodos = todos.filter((todo) => this.shouldDisplayTodo(todo));
+    let visibleTodos;
+    if (this.showDetails) {
+      visibleTodos = [...todos];
+    } else {
+      visibleTodos = todos.filter((todo) => this.shouldDisplayTodo(todo));
+    }
 
     // sort by category importance (descending). Higher importanceIndex -> earlier in list
     visibleTodos.sort((a, b) => {
@@ -391,8 +410,8 @@ const app = {
       return;
     }
 
-    // support collapsed view: only show top two when collapsed
-    const listToRender = this.collapsed ? visibleTodos.slice(0, 2) : visibleTodos;
+    // support collapsed view: only show top two when collapsed (unless details mode is active)
+    const listToRender = (this.collapsed && !this.showDetails) ? visibleTodos.slice(0, 2) : visibleTodos;
 
     listToRender.forEach((todo) => {
       const todoItem = document.createElement("li");
@@ -424,6 +443,33 @@ const app = {
       const info = document.createElement("div");
       info.className = "todo-info";
       info.append(label);
+
+      if (this.showDetails) {
+        const details = document.createElement("div");
+        details.className = "todo-details";
+
+        const categoryText = document.createElement("div");
+        categoryText.textContent = `Category: ${todo.category}`;
+
+        const completedText = document.createElement("div");
+        completedText.textContent = `Completed: ${todo.completed ? "Yes" : "No"}`;
+
+        const hiddenText = document.createElement("div");
+        hiddenText.textContent = `Hidden: ${this.shouldDisplayTodo(todo) ? "No" : "Yes"}`;
+
+        const previous = todo.previousTodoId ? (todos.find((t) => String(t.id) === String(todo.previousTodoId)) || null) : null;
+        const previousText = document.createElement("div");
+        previousText.textContent = `Previous todo: ${previous ? previous.text : "None"}`;
+
+        const dueText = document.createElement("div");
+        dueText.textContent = `Due date: ${todo.dueDate || "N/A"} ${todo.dueTime || ""}`;
+
+        const createdText = document.createElement("div");
+        createdText.textContent = `Created: ${todo.dateDisplay} ${todo.timeDisplay}`;
+
+        details.append(categoryText, completedText, hiddenText, previousText, dueText, createdText);
+        info.append(details);
+      }
 
       todoItem.append(checkbox, info);
       this.elements.todoList.append(todoItem);
