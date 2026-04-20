@@ -467,7 +467,26 @@ const app = {
         const createdText = document.createElement("div");
         createdText.textContent = `Created: ${todo.dateDisplay} ${todo.timeDisplay}`;
 
-        details.append(categoryText, completedText, hiddenText, previousText, dueText, createdText);
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete";
+        deleteButton.className = "delete-button";
+        deleteButton.addEventListener("click", () => {
+          const index = todos.findIndex((t) => t.id === todo.id);
+          if (index > -1) {
+            // Update any todos that depend on this one
+            todos.forEach((t) => {
+              if (String(t.previousTodoId) === String(todo.id)) {
+                t.previousTodoId = null;
+              }
+            });
+            todos.splice(index, 1);
+            this.saveToLocalStorage();
+            this.renderTodos();
+          }
+        });
+
+        details.append(categoryText, completedText, hiddenText, previousText, dueText, createdText, deleteButton);
         info.append(details);
       }
 
